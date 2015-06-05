@@ -26,6 +26,18 @@ module Callbacks
     @@new_method = true
   end
 
+  def before_callbacks
+    @@before_callbacks ||= {}
+  end
+
+  def around_callbacks
+    @@around_callbacks ||= {}
+  end
+
+  def after_callbacks
+    @@after_callbacks ||= {}
+  end
+
   def before(*method_names, &block)
     method_names.each do |method_name|
       before_callbacks[method_name] = block
@@ -44,19 +56,9 @@ module Callbacks
     end
   end
 
-  def before_callbacks
-    @@before_callbacks ||= {}
-  end
-
-  def around_callbacks
-    @@around_callbacks ||= {}
-  end
-
-  def after_callbacks
-    @@after_callbacks ||= {}
-  end
-
   module InstanceMethods
+
+    private
 
     def call_before_callbacks(method_name)
       callback = self.class.send(:before_callbacks)[method_name]
