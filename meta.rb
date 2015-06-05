@@ -2,13 +2,13 @@ module Callbacks
   @@new_method = true
 
   def self.extended(base)
-    base.include InstanceMethods
+    base.send :include, InstanceMethods
   end
 
   private
 
   def method_added(method_name)
-    return if @@new_method == false || [:call_before_callbacks, :call_after_callbacks].include?(method_name)
+    return if @@new_method == false || [:call_before_callbacks, :call_around_callbacks, :call_after_callbacks].include?(method_name)
 
     method = instance_method(method_name)
     undef_method(method_name)
@@ -17,7 +17,7 @@ module Callbacks
 
     define_method(method_name) do |*args, &block|
       call_before_callbacks(method_name)
-      return_value = method.bind(self).call(*args, &block)
+      return_value = call_around_callbacks(method_name) { method.bind(self).call(*args, &block) }
       call_after_callbacks(method_name)
 
       return_value
@@ -63,9 +63,19 @@ module Callbacks
       callback.call if callback
     end
 
-    def call_around_callbacks(method_name)
+    def call_around_callbacks(method_name, &block)
       callback = self.class.send(:around_callbacks)[method_name]
-      callback.call if callback
+      return_value = nil
+
+      method = -> { return_value = block.call }
+
+      if callback
+        callback.call(method)
+      else
+        method.call
+      end
+
+      return_value
     end
 
     def call_after_callbacks(method_name)
@@ -79,11 +89,25 @@ end
 class Model
   extend Callbacks
 
-  before(:save) { puts 'before' }
-  after(:save) { puts 'before' }
+  before :save do
+    puts 'before'
+  end
+
+  around :save do |method|
+    puts 'before_around'
+    method.call
+    puts 'after_around'
+  end
+
+  after :save do
+    puts 'after'
+  end
 
   def save
     puts 'save'
   end
 
 end
+
+model = Model.new
+model.save
