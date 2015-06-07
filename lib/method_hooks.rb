@@ -1,7 +1,7 @@
 require "method_hooks/version"
 
 module MethodHooks
-  @@new_method = true
+  @new_method = true
 
   def self.extended(base)
     base.send :include, InstanceMethods
@@ -10,12 +10,12 @@ module MethodHooks
   private
 
   def method_added(method_name)
-    return if @@new_method == false || [:call_before_callbacks, :call_around_callbacks, :call_after_callbacks].include?(method_name)
+    return if @new_method == false || [:call_before_callbacks, :call_around_callbacks, :call_after_callbacks].include?(method_name)
 
     method = instance_method(method_name)
     undef_method(method_name)
 
-    @@new_method = false
+    @new_method = false
 
     define_method(method_name) do |*args, &block|
       call_before_callbacks(method_name)
@@ -25,19 +25,19 @@ module MethodHooks
       return_value
     end
 
-    @@new_method = true
+    @new_method = true
   end
 
   def before_callbacks
-    @@before_callbacks ||= {}
+    @before_callbacks ||= {}
   end
 
   def around_callbacks
-    @@around_callbacks ||= {}
+    @around_callbacks ||= {}
   end
 
   def after_callbacks
-    @@after_callbacks ||= {}
+    @after_callbacks ||= {}
   end
 
   def before(*method_names, &block)
@@ -64,7 +64,7 @@ module MethodHooks
 
     def call_before_callbacks(method_name)
       callback = self.class.send(:before_callbacks)[method_name]
-      callback.call if callback
+      instance_eval(&callback) if callback
     end
 
     def call_around_callbacks(method_name, &block)
@@ -74,7 +74,7 @@ module MethodHooks
       method = -> { return_value = block.call }
 
       if callback
-        callback.call(method)
+        instance_exec(method, &callback)
       else
         method.call
       end
@@ -84,7 +84,7 @@ module MethodHooks
 
     def call_after_callbacks(method_name)
       callback = self.class.send(:after_callbacks)[method_name]
-      callback.call if callback
+      instance_eval(&callback) if callback
     end
 
   end
