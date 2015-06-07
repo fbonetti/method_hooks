@@ -1,6 +1,6 @@
 # MethodHooks
 
-TODO: Write a gem description
+Allows you to add `before`, `around`, and `after` callbacks to **any** method.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-```
+```ruby
 class Model
   extend Callbacks
 
