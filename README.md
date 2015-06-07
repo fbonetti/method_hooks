@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fbonetti/method_hooks.svg?branch=master)](https://travis-ci.org/fbonetti/method_hooks)
+
 # MethodHooks
 
 Allows you to add `before`, `around`, and `after` callbacks to **any** method.
