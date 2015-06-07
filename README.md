@@ -24,7 +24,7 @@ Or install it yourself as:
 
 ```ruby
 class Model
-  extend Callbacks
+  extend MethodHooks
 
   before :save do
     puts 'before'
