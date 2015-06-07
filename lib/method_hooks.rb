@@ -29,32 +29,32 @@ module MethodHooks
   end
 
   def before_callbacks
-    @before_callbacks ||= {}
+    @before_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
   end
 
   def around_callbacks
-    @around_callbacks ||= {}
+    @around_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
   end
 
   def after_callbacks
-    @after_callbacks ||= {}
+    @after_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
   end
 
   def before(*method_names, &block)
     method_names.each do |method_name|
-      before_callbacks[method_name] = block
+      before_callbacks[method_name] << block
     end
   end
 
   def around(*method_names, &block)
     method_names.each do |method_name|
-      around_callbacks[method_name] = block
+      around_callbacks[method_name] << block
     end
   end
 
   def after(*method_names, &block)
     method_names.each do |method_name|
-      after_callbacks[method_name] = block
+      after_callbacks[method_name] << block
     end
   end
 
@@ -63,28 +63,34 @@ module MethodHooks
     private
 
     def call_before_callbacks(method_name)
-      callback = self.class.send(:before_callbacks)[method_name]
-      instance_eval(&callback) if callback
+      callbacks = self.class.send(:before_callbacks)[method_name]
+      callbacks.each do |callback|
+        instance_eval(&callback)
+      end
     end
 
     def call_around_callbacks(method_name, &block)
-      callback = self.class.send(:around_callbacks)[method_name]
+      callbacks = self.class.send(:around_callbacks)[method_name]
       return_value = nil
 
       method = -> { return_value = block.call }
 
-      if callback
-        instance_exec(method, &callback)
-      else
+      if callbacks.empty?
         method.call
+      else
+        callbacks.each do |callback|
+          instance_exec(method, &callback)
+        end
       end
 
       return_value
     end
 
     def call_after_callbacks(method_name)
-      callback = self.class.send(:after_callbacks)[method_name]
-      instance_eval(&callback) if callback
+      callbacks = self.class.send(:after_callbacks)[method_name]
+      callbacks.each do |callback|
+        instance_eval(&callback)
+      end
     end
 
   end
