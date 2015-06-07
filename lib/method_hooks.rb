@@ -1,4 +1,6 @@
-module Callbacks
+require "method_hooks/version"
+
+module MethodHooks
   @@new_method = true
 
   def self.extended(base)
@@ -87,29 +89,3 @@ module Callbacks
 
   end
 end
-
-class Model
-  extend Callbacks
-
-  before :save do
-    puts 'before'
-  end
-
-  around :save do |method|
-    puts 'before_around'
-    method.call
-    puts 'after_around'
-  end
-
-  after :save do
-    puts 'after'
-  end
-
-  def save
-    puts 'save'
-  end
-
-end
-
-model = Model.new
-model.save
