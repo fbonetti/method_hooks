@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = MethodHooks::VERSION
   spec.authors       = ["Frank Bonetti"]
   spec.email         = ["frank.r.bonetti@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+  spec.summary       = %q{Rails-style method hooks for plain old Ruby objects}
+  spec.description   = %q{Rails-style method hooks for plain old Ruby objects}
+  spec.homepage      = "https://github.com/fbonetti/method_hooks"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
