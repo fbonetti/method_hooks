@@ -5,7 +5,20 @@ describe MethodHooks do
   before do
     Object.send(:remove_const, :Base) if Object.const_defined?(:Base)
 
+    module AnotherModuleWIthMethodAddedHook
+      def method_added(method_name)
+        _methods << method_name
+        super
+      end
+
+      def _methods
+        @_methods ||= []
+      end
+    end
+
     class Base
+
+      extend AnotherModuleWIthMethodAddedHook
       extend MethodHooks
 
       attr_reader :events
@@ -79,6 +92,15 @@ describe MethodHooks do
       expect(base.events).to eq(['save', 'after'])
     end
 
+  end
+
+  it 'does not override existing .method_added hook' do
+    Base.class_eval do
+      def some_method
+      end
+    end
+
+    expect(Base._methods).to include(:some_method)
   end
 
 end
