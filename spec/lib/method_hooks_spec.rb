@@ -104,25 +104,26 @@ describe MethodHooks do
   end
 
   describe 'inheritance' do
-      it 'should pass parent hooks to the child' do
-          Base.instance_eval do
-              before(:save) { @events << 'before' }
-              around(:save) do |method|
-                  @events << 'before_around'
-                  method.call
-                  @events << 'after_around'
-              end
+    it 'should pass parent hooks to the child' do
+      Base.instance_eval do
+        before(:save) { @events << 'before' }
+        
+        around(:save) do |method|
+          @events << 'before_around'
+          method.call
+          @events << 'after_around'
+        end
 
-              after(:save) { @events << 'after' }
-          end
-
-          Object.send(:remove_const, :Child) if Object.const_defined?(:Child)
-          class Child < Base; end
-
-          child = Child.new
-          child.save
-
-          expect(child.events).to eq(['before', 'before_around', 'save', 'after_around', 'after'])
+        after(:save) { @events << 'after' }
       end
+
+      Object.send(:remove_const, :Child) if Object.const_defined?(:Child)
+      class Child < Base; end
+
+      child = Child.new
+      child.save
+
+      expect(child.events).to eq(['before', 'before_around', 'save', 'after_around', 'after'])
+    end
   end
 end
