@@ -9,6 +9,20 @@ module MethodHooks
 
   private
 
+  def inherited(child_class)
+      parent_before = before_callbacks
+      parent_after = after_callbacks
+      parent_around = around_callbacks
+
+      child_class.class_eval do
+          @before_callbacks = parent_before
+          @around_callbacks = parent_around
+          @after_callbacks = parent_after
+      end
+
+      super
+  end
+
   def method_added(method_name)
     super
     return if @new_method == false || [:initialize, :call_before_callbacks, :call_around_callbacks, :call_after_callbacks].include?(method_name)
