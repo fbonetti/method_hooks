@@ -10,6 +10,7 @@ module MethodHooks
   private
 
   def method_added(method_name)
+    super
     return if @new_method == false || [:initialize, :call_before_callbacks, :call_around_callbacks, :call_after_callbacks].include?(method_name)
 
     method = instance_method(method_name)
