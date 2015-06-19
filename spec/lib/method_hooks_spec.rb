@@ -196,7 +196,7 @@ describe MethodHooks do
       parent = Base.new
       parent.save
 
-      expect(child.events).to eq(['parent before', 'child before', 'save'])
+      expect(child.events).to eq(['child before', 'parent before', 'save'])
       expect(parent.events).to eq(['parent before', 'save'])
     end
 
@@ -226,8 +226,8 @@ describe MethodHooks do
 
 
       expect(parent.events).to eq(['parent before', 'save'])
-      expect(child.events).to eq(['parent before', 'child before', 'save'])
-      expect(grandchild.events).to eq(['parent before', 'child before', 'grandchild before', 'save'])
+      expect(child.events).to eq(['child before', 'parent before', 'save'])
+      expect(grandchild.events).to eq(['grandchild before', 'child before', 'parent before', 'save'])
     end
   end
 end
