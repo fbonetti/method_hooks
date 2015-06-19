@@ -1,5 +1,4 @@
 require "method_hooks/version"
-require "active_support/core_ext/class/subclasses"
 require "active_support/core_ext/object/deep_dup"
 
 module MethodHooks
@@ -13,9 +12,9 @@ module MethodHooks
 
   def inherited(child_class)
     child_class.instance_variable_set(:@new_method, true)
-    child_class.instance_variable_set(:@before_callbacks, before_callbacks.deep_dup)
-    child_class.instance_variable_set(:@around_callbacks, around_callbacks.deep_dup)
-    child_class.instance_variable_set(:@after_callbacks, after_callbacks.deep_dup)
+    child_class.instance_variable_set(:@inherited_before_callbacks, all_before_callbacks.deep_dup)
+    child_class.instance_variable_set(:@inherited_around_callbacks, all_around_callbacks.deep_dup)
+    child_class.instance_variable_set(:@inherited_after_callbacks, all_after_callbacks.deep_dup)
 
     super
   end
@@ -40,6 +39,30 @@ module MethodHooks
     @new_method = true
   end
 
+  def all_before_callbacks
+    before_callbacks.merge(inherited_before_callbacks) {|key, this, other| this + other}
+  end
+
+  def all_around_callbacks
+    around_callbacks.merge(inherited_around_callbacks) {|key, this, other| this + other}
+  end
+
+  def all_after_callbacks
+    after_callbacks.merge(inherited_after_callbacks) {|key, this, other| this + other}
+  end
+
+  def inherited_before_callbacks
+    @inherited_before_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
+  end
+
+  def inherited_around_callbacks
+    @inherited_around_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
+  end
+
+  def inherited_after_callbacks
+    @inherited_after_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
+  end
+
   def before_callbacks
     @before_callbacks ||= Hash.new { |hash, key| hash[key] = Array.new }
   end
@@ -61,10 +84,6 @@ module MethodHooks
     method_names.each do |method_name|
       before_callbacks[method_name] << block
     end
-
-    subclasses.each do |subclass|
-      descendant.before(method_names, &block)
-    end
   end
 
   def around(*method_names, &block)
@@ -75,10 +94,6 @@ module MethodHooks
 
     method_names.each do |method_name|
       around_callbacks[method_name] << block
-    end
-
-    subclasses.each do |subclass|
-      descendant.around(method_names, &block)
     end
   end
 
@@ -91,10 +106,6 @@ module MethodHooks
     method_names.each do |method_name|
       after_callbacks[method_name] << block
     end
-
-    subclasses.each do |subclass|
-      subclass.after(method_names, &block)
-    end
   end
 
   module InstanceMethods
@@ -102,14 +113,14 @@ module MethodHooks
     private
 
     def call_before_callbacks(method_name)
-      callbacks = self.class.send(:before_callbacks)[method_name]
+      callbacks = self.class.send(:all_before_callbacks)[method_name]
       callbacks.each do |callback|
         instance_eval(&callback)
       end
     end
 
     def call_around_callbacks(method_name, &block)
-      callbacks = self.class.send(:around_callbacks)[method_name]
+      callbacks = self.class.send(:all_around_callbacks)[method_name]
       return_value = nil
 
       method = -> { return_value = block.call }
@@ -126,7 +137,7 @@ module MethodHooks
     end
 
     def call_after_callbacks(method_name)
-      callbacks = self.class.send(:after_callbacks)[method_name]
+      callbacks = self.class.send(:all_after_callbacks)[method_name]
       callbacks.each do |callback|
         instance_eval(&callback)
       end
