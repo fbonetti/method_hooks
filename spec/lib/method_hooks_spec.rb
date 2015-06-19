@@ -58,6 +58,22 @@ describe MethodHooks do
       expect(base.events).to eq(['first before', 'second before', 'save'])
     end
 
+    it 'should call a method (by name) if no block is given' do
+      Base.instance_eval do
+        before(:save, :my_method)
+      end
+
+      Base.class_eval do
+        def my_method
+          @events << 'my_method'
+        end
+      end
+
+      base = Base.new
+      base.save
+
+      expect(base.events).to eq(['my_method', 'save'])
+    end
   end
 
   describe '::around' do
@@ -77,6 +93,24 @@ describe MethodHooks do
       expect(base.events).to eq(['before_around', 'save', 'after_around'])
     end
 
+    it 'should call a method (by name) if no block is given' do
+      Base.instance_eval do
+        around(:save, :my_method)
+      end
+
+      Base.class_eval do
+        def my_method(method)
+          @events << 'before my_method'
+          method.call
+          @events << 'after my_method'
+        end
+      end
+
+      base = Base.new
+      base.save
+
+      expect(base.events).to eq(['before my_method', 'save', 'after my_method'])
+    end
   end
 
   describe '::after' do
@@ -92,6 +126,22 @@ describe MethodHooks do
       expect(base.events).to eq(['save', 'after'])
     end
 
+    it 'should call a method (by name) if no block is given' do
+      Base.instance_eval do
+        after(:save, :my_method)
+      end
+
+      Base.class_eval do
+        def my_method
+          @events << 'my_method'
+        end
+      end
+
+      base = Base.new
+      base.save
+
+      expect(base.events).to eq(['save', 'my_method'])
+    end
   end
 
   it 'does not override existing .method_added hook' do

@@ -53,6 +53,11 @@ module MethodHooks
   end
 
   def before(*method_names, &block)
+    if block.nil?
+      callback_method = method_names.pop
+      block = proc { method(callback_method).call }
+    end
+
     method_names.each do |method_name|
       before_callbacks[method_name] << block
     end
@@ -63,6 +68,11 @@ module MethodHooks
   end
 
   def around(*method_names, &block)
+    if block.nil?
+      callback_method = method_names.pop
+      block = proc { |method| method(callback_method).call(method) }
+    end
+
     method_names.each do |method_name|
       around_callbacks[method_name] << block
     end
@@ -73,6 +83,11 @@ module MethodHooks
   end
 
   def after(*method_names, &block)
+    if block.nil?
+      callback_method = method_names.pop
+      block = proc { method(callback_method).call }
+    end
+
     method_names.each do |method_name|
       after_callbacks[method_name] << block
     end

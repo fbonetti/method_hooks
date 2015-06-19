@@ -69,6 +69,41 @@ after
 =end
 ```
 
+You can also specify a method to be called instead of using a block:
+
+```ruby
+class Model
+  extend MethodHooks
+
+  before :save, :my_method
+
+  def save
+    puts 'save'
+  end
+
+  private
+
+  def my_method
+    puts 'my_method'
+  end
+
+end
+
+model = Model.new
+model.save
+
+=begin
+
+Outputs the following:
+
+my_method
+save
+
+=end
+
+```
+
+
 ## Contributing
 
 1. Fork it ( https://github.com/[my-github-username]/method_hooks/fork )
