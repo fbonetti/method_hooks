@@ -1,4 +1,6 @@
 require "method_hooks/version"
+require "active_support/core_ext/class/subclasses"
+require "active_support/core_ext/object/deep_dup"
 
 module MethodHooks
   @new_method = true
@@ -10,17 +12,12 @@ module MethodHooks
   private
 
   def inherited(child_class)
-      parent_before = before_callbacks
-      parent_after = after_callbacks
-      parent_around = around_callbacks
+    child_class.instance_variable_set(:@new_method, true)
+    child_class.instance_variable_set(:@before_callbacks, before_callbacks.deep_dup)
+    child_class.instance_variable_set(:@around_callbacks, around_callbacks.deep_dup)
+    child_class.instance_variable_set(:@after_callbacks, after_callbacks.deep_dup)
 
-      child_class.class_eval do
-          @before_callbacks = parent_before
-          @around_callbacks = parent_around
-          @after_callbacks = parent_after
-      end
-
-      super
+    super
   end
 
   def method_added(method_name)
@@ -59,17 +56,29 @@ module MethodHooks
     method_names.each do |method_name|
       before_callbacks[method_name] << block
     end
+
+    subclasses.each do |subclass|
+      descendant.before(method_names, &block)
+    end
   end
 
   def around(*method_names, &block)
     method_names.each do |method_name|
       around_callbacks[method_name] << block
     end
+
+    subclasses.each do |subclass|
+      descendant.around(method_names, &block)
+    end
   end
 
   def after(*method_names, &block)
     method_names.each do |method_name|
       after_callbacks[method_name] << block
+    end
+
+    subclasses.each do |subclass|
+      subclass.after(method_names, &block)
     end
   end
 

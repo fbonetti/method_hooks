@@ -104,6 +104,11 @@ describe MethodHooks do
   end
 
   describe 'inheritance' do
+    before do
+      Object.send(:remove_const, :Child) if Object.const_defined?(:Child)
+      Object.send(:remove_const, :Grandchild) if Object.const_defined?(:Grandchild)
+    end
+
     it 'should pass parent hooks to the child' do
       Base.instance_eval do
         before(:save) { @events << 'before' }
@@ -117,13 +122,62 @@ describe MethodHooks do
         after(:save) { @events << 'after' }
       end
 
-      Object.send(:remove_const, :Child) if Object.const_defined?(:Child)
       class Child < Base; end
 
       child = Child.new
       child.save
 
       expect(child.events).to eq(['before', 'before_around', 'save', 'after_around', 'after'])
+    end
+
+    it 'should not mutate the parent callbacks when a callback is added to a child' do
+      Base.instance_eval do
+        before(:save) { @events << 'parent before' }
+      end
+
+      class Child < Base; end
+
+      Child.instance_eval do
+        before(:save) { @events << 'child before' }
+      end
+
+      child = Child.new
+      child.save
+      parent = Base.new
+      parent.save
+
+      expect(child.events).to eq(['parent before', 'child before', 'save'])
+      expect(parent.events).to eq(['parent before', 'save'])
+    end
+
+    it 'should add callbacks to all descendents of a class, recursively' do
+      Base.instance_eval do
+        before(:save) { @events << 'parent before' }
+      end
+
+      class Child < Base; end
+
+      Child.instance_eval do
+        before(:save) { @events << 'child before' }
+      end
+
+      class Grandchild < Child; end
+
+      Grandchild.instance_eval do
+        before(:save) { @events << 'grandchild before' }
+      end
+
+      parent = Base.new
+      parent.save
+      child = Child.new
+      child.save
+      grandchild = Grandchild.new
+      grandchild.save
+
+
+      expect(parent.events).to eq(['parent before', 'save'])
+      expect(child.events).to eq(['parent before', 'child before', 'save'])
+      expect(grandchild.events).to eq(['parent before', 'child before', 'grandchild before', 'save'])
     end
   end
 end
